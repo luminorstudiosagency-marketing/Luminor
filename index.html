@@ -2235,6 +2235,150 @@ min-width: 120px;
 }
 
 
+/* Contact form progress bar */
+.contact-form-progress {
+display: none;
+height: 4px;
+background: var(--bg-secondary);
+border-radius: 2px;
+overflow: hidden;
+margin-bottom: 0.5rem;
+}
+.contact-form-progress.is-active {
+display: block;
+}
+.contact-form-progress-bar {
+height: 100%;
+width: 40%;
+background: linear-gradient(90deg, var(--purple-accent), var(--blue-accent));
+border-radius: 2px;
+animation: contact-form-progress 1.1s ease-in-out infinite;
+}
+@keyframes contact-form-progress {
+0% { transform: translateX(-100%); }
+50% { transform: translateX(350%); }
+100% { transform: translateX(-100%); }
+}
+
+
+.contact-modal-form,
+.contact-form-progress {
+transition: opacity 1.35s ease-out;
+}
+.contact-modal-form.evaporating,
+.contact-form-progress.evaporating {
+opacity: 0;
+pointer-events: none;
+}
+
+
+.contact-modal-title {
+transition: opacity 1.35s ease-out;
+}
+.contact-modal-title.evaporating {
+opacity: 0;
+pointer-events: none;
+}
+
+
+.contact-modal-dialog {
+transition: opacity 1.35s ease-out;
+}
+.contact-modal-dialog.evaporating {
+opacity: 0;
+pointer-events: none;
+}
+
+
+.contact-evaporate-particles {
+position: absolute;
+left: 0;
+right: 0;
+top: 0;
+bottom: 0;
+pointer-events: none;
+z-index: 5;
+overflow: hidden;
+}
+.contact-evaporate-particles-fixed {
+position: fixed;
+pointer-events: none;
+z-index: 10;
+overflow: hidden;
+}
+.contact-evaporate-particle {
+position: absolute;
+width: 6px;
+height: 6px;
+border-radius: 50%;
+opacity: 0;
+animation: contact-evaporate 1.4s ease-out forwards;
+}
+.contact-evaporate-particle.purple {
+background: var(--purple-accent);
+box-shadow: 0 0 12px var(--purple-accent);
+}
+.contact-evaporate-particle.blue {
+background: var(--blue-accent);
+box-shadow: 0 0 12px var(--blue-accent);
+}
+.contact-evaporate-particle.pink {
+background: var(--pink-accent);
+box-shadow: 0 0 12px var(--pink-accent);
+}
+@keyframes contact-evaporate {
+0% {
+opacity: 0.9;
+transform: translateY(0) scale(1);
+}
+100% {
+opacity: 0;
+transform: translateY(-100px) scale(0.2);
+}
+}
+
+
+.contact-thank-you {
+opacity: 0;
+transition: opacity 0.45s ease-out;
+}
+.contact-thank-you.is-visible.is-shown {
+opacity: 1;
+}
+.contact-thank-you.evaporating {
+opacity: 0;
+pointer-events: none;
+transition: opacity 1.35s ease-out;
+}
+
+
+/* Contact thank-you message */
+.contact-thank-you {
+display: none;
+text-align: center;
+padding: 1.5rem 0;
+}
+.contact-thank-you.is-visible {
+display: block;
+}
+.contact-thank-you-text {
+font-size: 1.25rem;
+line-height: 1.6;
+color: var(--text-secondary);
+margin-bottom: 1.5rem;
+}
+.contact-thank-you-name {
+font-weight: 500;
+background: linear-gradient(135deg, var(--purple-accent), var(--blue-accent));
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+}
+.contact-thank-you-close {
+margin-top: 0.5rem;
+}
+
+
 /* Session date & time picker (EST) */
 .contact-date-wrap,
 .contact-datetime-wrap {
@@ -3197,7 +3341,7 @@ Book your free strategy call and we'll show you exactly how we'll grow your acco
 <div class="contact-modal-overlay"></div>
 <div class="contact-modal-dialog" role="dialog" aria-labelledby="contact-modal-title" aria-modal="true">
 <h2 id="contact-modal-title" class="contact-modal-title">Get in touch</h2>
-<form class="contact-modal-form" id="contact-modal-form">
+<form class="contact-modal-form" id="contact-modal-form" action="https://formspree.io/f/mnjbjvgz" method="POST">
 <div class="contact-modal-field">
 <label for="contact-name">Your name:</label>
 <input type="text" id="contact-name" name="name" required placeholder="Your name">
@@ -3236,11 +3380,18 @@ Book your free strategy call and we'll show you exactly how we'll grow your acco
 <label for="contact-message">Your message:</label>
 <textarea id="contact-message" name="message" rows="4" required placeholder="Your message"></textarea>
 </div>
+<div id="contact-form-progress" class="contact-form-progress" aria-hidden="true">
+<div class="contact-form-progress-bar"></div>
+</div>
 <div class="contact-modal-actions">
 <button type="submit" class="btn-primary">Submit</button>
 <button type="button" class="btn-secondary contact-modal-cancel">Cancel</button>
 </div>
 </form>
+<div id="contact-thank-you" class="contact-thank-you" aria-hidden="true">
+<p class="contact-thank-you-text">Thank you <span id="contact-thank-you-name" class="contact-thank-you-name"></span>, we will get back with you soon!</p>
+<button type="button" class="btn-primary contact-thank-you-close">Close</button>
+</div>
 <div id="contact-datetime-picker" class="contact-datetime-picker" role="dialog" aria-label="Calendar and time picker" aria-hidden="true">
 <div class="contact-datetime-picker-header">
 <button type="button" class="contact-datetime-prev" aria-label="Previous month">&larr;</button>
@@ -3620,16 +3771,9 @@ const overlay = modal && modal.querySelector('.contact-modal-overlay');
 const cancelBtn = modal && modal.querySelector('.contact-modal-cancel');
 
 
-function openModal() {
+function closeModal(skipReset) {
 if (!modal) return;
-modal.classList.add('is-open');
-modal.setAttribute('aria-hidden', 'false');
-document.body.style.overflow = 'hidden';
-}
-
-
-function closeModal() {
-if (!modal) return;
+if (!skipReset && typeof resetModalContent === 'function') resetModalContent();
 modal.classList.remove('is-open');
 modal.setAttribute('aria-hidden', 'true');
 document.body.style.overflow = '';
@@ -3661,11 +3805,151 @@ if (overlay) overlay.addEventListener('click', closeModal);
 if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 
 
-// Submit: close modal (no backend)
+var thankYouEl = document.getElementById('contact-thank-you');
+var modalTitle = modal && modal.querySelector('.contact-modal-title');
+
+
+function showThankYou(name) {
+var nameSpan = document.getElementById('contact-thank-you-name');
+if (nameSpan) nameSpan.textContent = name && name.trim() ? name.trim() : 'there';
+if (form) form.style.display = 'none';
+if (modalTitle) modalTitle.style.display = 'none';
+if (thankYouEl) {
+thankYouEl.classList.add('is-visible');
+thankYouEl.setAttribute('aria-hidden', 'false');
+thankYouEl.classList.remove('is-shown');
+requestAnimationFrame(function() {
+requestAnimationFrame(function() { thankYouEl.classList.add('is-shown'); });
+});
+}
+}
+
+
+function resetModalContent() {
+if (form) {
+form.style.display = '';
+form.classList.remove('evaporating');
+}
+if (modalTitle) {
+modalTitle.style.display = '';
+modalTitle.classList.remove('evaporating');
+}
+var progressEl = document.getElementById('contact-form-progress');
+if (progressEl) progressEl.classList.remove('evaporating');
+if (thankYouEl) {
+thankYouEl.classList.remove('is-visible', 'is-shown', 'evaporating');
+thankYouEl.setAttribute('aria-hidden', 'true');
+}
+var dialogEl = modal && modal.querySelector('.contact-modal-dialog');
+if (dialogEl) dialogEl.classList.remove('evaporating');
+}
+
+
+function createEvaporateParticles(modalEl, dialogEl, options) {
+if (!modalEl || !dialogEl) return null;
+options = options || {};
+var count = options.count !== undefined ? options.count : 50;
+var bottomMin = options.bottomMin !== undefined ? options.bottomMin : 2;
+var bottomMax = options.bottomMax !== undefined ? options.bottomMax : 95;
+var leftMin = options.leftMin !== undefined ? options.leftMin : 2;
+var leftMax = options.leftMax !== undefined ? options.leftMax : 95;
+var rect = dialogEl.getBoundingClientRect();
+var container = document.createElement('div');
+container.className = 'contact-evaporate-particles contact-evaporate-particles-fixed';
+container.style.left = rect.left + 'px';
+container.style.top = rect.top + 'px';
+container.style.width = rect.width + 'px';
+container.style.height = rect.height + 'px';
+var colors = ['purple', 'blue', 'pink'];
+for (var i = 0; i < count; i++) {
+var p = document.createElement('div');
+p.className = 'contact-evaporate-particle ' + colors[i % 3];
+p.style.left = (leftMin + Math.random() * (leftMax - leftMin)) + '%';
+p.style.bottom = (bottomMin + Math.random() * (bottomMax - bottomMin)) + '%';
+p.style.animationDelay = (Math.random() * 0.35) + 's';
+container.appendChild(p);
+}
+modalEl.appendChild(container);
+return container;
+}
+
+
+if (thankYouEl) {
+var closeThankYouBtn = thankYouEl.querySelector('.contact-thank-you-close');
+if (closeThankYouBtn) closeThankYouBtn.addEventListener('click', function() {
+var dialog = modal && modal.querySelector('.contact-modal-dialog');
+thankYouEl.classList.add('evaporating');
+dialog.classList.add('evaporating');
+var container = createEvaporateParticles(modal, dialog, { count: 50 });
+setTimeout(function() {
+if (container && container.parentNode) container.parentNode.removeChild(container);
+closeModal(true);
+}, 1500);
+});
+}
+
+
+function openModal() {
+if (!modal) return;
+resetModalContent();
+modal.classList.add('is-open');
+modal.setAttribute('aria-hidden', 'false');
+document.body.style.overflow = 'hidden';
+}
+
+
 if (form) {
 form.addEventListener('submit', function(e) {
 e.preventDefault();
-closeModal();
+var submitBtn = form.querySelector('button[type="submit"]');
+var originalText = submitBtn ? submitBtn.textContent : 'Submit';
+var userName = form.querySelector('[name="name"]') ? form.querySelector('[name="name"]').value : '';
+var progressEl = document.getElementById('contact-form-progress');
+if (progressEl) {
+progressEl.classList.add('is-active');
+progressEl.setAttribute('aria-hidden', 'false');
+}
+if (submitBtn) {
+submitBtn.disabled = true;
+submitBtn.textContent = 'Sending...';
+}
+fetch(form.action, {
+method: 'POST',
+body: new FormData(form),
+headers: { 'Accept': 'application/json' }
+})
+.then(function(response) {
+if (response.ok) {
+var dialog = modal && modal.querySelector('.contact-modal-dialog');
+if (form) form.classList.add('evaporating');
+if (modalTitle) modalTitle.classList.add('evaporating');
+if (progressEl) progressEl.classList.add('evaporating');
+dialog.classList.add('evaporating');
+var container = createEvaporateParticles(modal, dialog, { count: 50 });
+setTimeout(function() {
+if (container && container.parentNode) container.parentNode.removeChild(container);
+dialog.classList.remove('evaporating');
+showThankYou(userName);
+}, 1500);
+} else {
+return response.json().then(function(data) {
+throw data.error || new Error('Something went wrong');
+});
+}
+})
+.catch(function() {
+alert('There was a problem sending your message. Please try again or email us directly.');
+})
+.finally(function() {
+if (progressEl) {
+progressEl.classList.remove('is-active');
+progressEl.setAttribute('aria-hidden', 'true');
+}
+if (submitBtn) {
+submitBtn.disabled = false;
+submitBtn.textContent = originalText;
+}
+});
 });
 }
 
